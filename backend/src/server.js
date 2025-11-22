@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { errorHandler } from './core/middlewares/errorHandler.js';
+import { cacheMiddleware, getCacheDuration } from './core/middlewares/cache.js';
 
 // Load environment variables
 dotenv.config();
@@ -37,16 +38,16 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes - Version 1
+// API Routes - Version 1 (with caching)
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/products', productRouter);
-app.use('/api/v1/warehouses', warehouseRouter);
-app.use('/api/v1/receipts', receiptRouter);
-app.use('/api/v1/deliveries', deliveryRouter);
-app.use('/api/v1/transfers', transferRouter);
-app.use('/api/v1/adjustments', adjustmentRouter);
-app.use('/api/v1/ledger', ledgerRouter);
-app.use('/api/v1/dashboard', dashboardRouter);
+app.use('/api/v1/products', cacheMiddleware(getCacheDuration('/products')), productRouter);
+app.use('/api/v1/warehouses', cacheMiddleware(getCacheDuration('/warehouses')), warehouseRouter);
+app.use('/api/v1/receipts', cacheMiddleware(getCacheDuration('/receipts')), receiptRouter);
+app.use('/api/v1/deliveries', cacheMiddleware(getCacheDuration('/deliveries')), deliveryRouter);
+app.use('/api/v1/transfers', cacheMiddleware(getCacheDuration('/transfers')), transferRouter);
+app.use('/api/v1/adjustments', cacheMiddleware(getCacheDuration('/adjustments')), adjustmentRouter);
+app.use('/api/v1/ledger', cacheMiddleware(getCacheDuration('/ledger')), ledgerRouter);
+app.use('/api/v1/dashboard', cacheMiddleware(getCacheDuration('/dashboard/kpis')), dashboardRouter);
 
 // 404 handler
 app.use((req, res) => {

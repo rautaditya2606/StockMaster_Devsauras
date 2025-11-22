@@ -1,30 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import DataTable from '@/components/DataTable'
-import { adjustmentsAPI } from '@/services/api'
+import { useAdjustments } from '@/hooks/useInventory'
 import { useRouter } from 'next/navigation'
 
 export default function AdjustmentsPage() {
   const router = useRouter()
-  const [adjustments, setAdjustments] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchAdjustments()
-  }, [])
-
-  const fetchAdjustments = async () => {
-    try {
-      const response = await adjustmentsAPI.getAll()
-      setAdjustments(response.data.data)
-    } catch (error) {
-      console.error('Failed to fetch adjustments:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: adjustments = [], isLoading: loading } = useAdjustments()
 
   const columns = [
     { key: 'product', label: 'Product', render: (value, row) => row.product?.name || '-' },

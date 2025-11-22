@@ -1,31 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import DataTable from '@/components/DataTable'
 import StatusBadge from '@/components/StatusBadge'
-import { transfersAPI } from '@/services/api'
+import { useTransfers } from '@/hooks/useInventory'
 import { useRouter } from 'next/navigation'
 
 export default function TransfersPage() {
   const router = useRouter()
-  const [transfers, setTransfers] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchTransfers()
-  }, [])
-
-  const fetchTransfers = async () => {
-    try {
-      const response = await transfersAPI.getAll()
-      setTransfers(response.data.data)
-    } catch (error) {
-      console.error('Failed to fetch transfers:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: transfers = [], isLoading: loading } = useTransfers()
 
   const columns = [
     {

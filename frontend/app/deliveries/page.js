@@ -1,31 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import DataTable from '@/components/DataTable'
 import StatusBadge from '@/components/StatusBadge'
-import { deliveriesAPI } from '@/services/api'
+import { useDeliveries } from '@/hooks/useInventory'
 import { useRouter } from 'next/navigation'
 
 export default function DeliveriesPage() {
   const router = useRouter()
-  const [deliveries, setDeliveries] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchDeliveries()
-  }, [])
-
-  const fetchDeliveries = async () => {
-    try {
-      const response = await deliveriesAPI.getAll()
-      setDeliveries(response.data.data)
-    } catch (error) {
-      console.error('Failed to fetch deliveries:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: deliveries = [], isLoading: loading } = useDeliveries()
 
   const columns = [
     { key: 'customerName', label: 'Customer' },

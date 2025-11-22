@@ -1,30 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import DataTable from '@/components/DataTable'
-import { productsAPI } from '@/services/api'
+import { useProducts } from '@/hooks/useProducts'
 import { useRouter } from 'next/navigation'
 
 export default function ProductsPage() {
   const router = useRouter()
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  const fetchProducts = async () => {
-    try {
-      const response = await productsAPI.getAll()
-      setProducts(response.data.data)
-    } catch (error) {
-      console.error('Failed to fetch products:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: products = [], isLoading: loading } = useProducts()
 
   const columns = [
     { key: 'name', label: 'Name' },

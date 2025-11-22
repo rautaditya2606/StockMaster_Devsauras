@@ -1,31 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import DataTable from '@/components/DataTable'
 import StatusBadge from '@/components/StatusBadge'
-import { receiptsAPI } from '@/services/api'
+import { useReceipts } from '@/hooks/useInventory'
 import { useRouter } from 'next/navigation'
 
 export default function ReceiptsPage() {
   const router = useRouter()
-  const [receipts, setReceipts] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchReceipts()
-  }, [])
-
-  const fetchReceipts = async () => {
-    try {
-      const response = await receiptsAPI.getAll()
-      setReceipts(response.data.data)
-    } catch (error) {
-      console.error('Failed to fetch receipts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: receipts = [], isLoading: loading } = useReceipts()
 
   const columns = [
     { key: 'supplierName', label: 'Supplier' },

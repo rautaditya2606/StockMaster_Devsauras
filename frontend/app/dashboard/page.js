@@ -6,20 +6,23 @@ import KPICard from '@/components/KPICard'
 import PieChart from '@/components/charts/PieChart'
 import LineChart from '@/components/charts/LineChart'
 import BarChart from '@/components/charts/BarChart'
-import { dashboardAPI, warehousesAPI } from '@/services/api'
+import {
+  useDashboardKPIs,
+  useWarehouses,
+  useWarehouseStockDistribution,
+  useStockByCategory,
+  useStockHistory,
+  useTopProducts,
+} from '@/hooks/useDashboard'
 
 export default function DashboardPage() {
-  const [kpis, setKpis] = useState(null)
-  const [warehouses, setWarehouses] = useState([])
   const [selectedWarehouse, setSelectedWarehouse] = useState(null)
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  
-  // Chart data states
-  const [stockByCategory, setStockByCategory] = useState([])
-  const [stockHistory, setStockHistory] = useState([])
-  const [warehouseDistribution, setWarehouseDistribution] = useState([])
-  const [topProducts, setTopProducts] = useState([])
+
+  // Fetch data using React Query (cached)
+  const { data: kpis, isLoading: kpisLoading } = useDashboardKPIs()
+  const { data: warehouses = [], isLoading: warehousesLoading } = useWarehouses()
+  const { data: warehouseDistribution = [] } = useWarehouseStockDistribution()
 
   useEffect(() => {
     // Get user from localStorage
@@ -40,39 +43,7 @@ export default function DashboardPage() {
     ? warehouses 
     : (user?.warehouseId ? warehouses.filter(w => w.id === user.warehouseId) : [])
 
-  useEffect(() => {
-    if (user) {
-      fetchData()
-    }
-  }, [user, selectedWarehouse])
-
-  // Fetch warehouse distribution for manager
-  useEffect(() => {
-    if (user?.role === 'MANAGER') {
-      dashboardAPI.getWarehouseStockDistribution()
-        .then(res => setWarehouseDistribution(res.data.data))
-        .catch(err => console.error('Failed to fetch warehouse distribution:', err))
-    }
-  }, [user?.role])
-
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-      
-      // Fetch KPIs
-      const kpisResponse = await dashboardAPI.getKPIs()
-      setKpis(kpisResponse.data.data)
-
-      // Fetch warehouses
-      const warehousesResponse = await warehousesAPI.getAll()
-      const allWarehouses = warehousesResponse.data.data
-      setWarehouses(allWarehouses)
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const loading = kpisLoading || warehousesLoading
 
   if (loading) {
     return (
@@ -205,39 +176,11 @@ export default function DashboardPage() {
 
 // Component for warehouse-specific charts
 function WarehouseChartsSection({ warehouse }) {
-  const [stockByCategory, setStockByCategory] = useState([])
-  const [stockHistory, setStockHistory] = useState([])
-  const [topProducts, setTopProducts] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: stockByCategory = [], isLoading: categoryLoading } = useStockByCategory(warehouse?.id)
+  const { data: stockHistory = [], isLoading: historyLoading } = useStockHistory(warehouse?.id, 30)
+  const { data: topProducts = [], isLoading: productsLoading } = useTopProducts(warehouse?.id, 10)
 
-  useEffect(() => {
-    fetchWarehouseCharts()
-  }, [warehouse.id])
-
-  const fetchWarehouseCharts = async () => {
-    try {
-      setLoading(true)
-      
-      // Stock by category
-      const categoryResponse = await dashboardAPI.getStockByCategory(warehouse.id)
-      setStockByCategory(categoryResponse.data.data.map(item => ({
-        name: item.category,
-        value: item.quantity
-      })))
-
-      // Stock history
-      const historyResponse = await dashboardAPI.getStockHistory(warehouse.id, 30)
-      setStockHistory(historyResponse.data.data)
-
-      // Top products
-      const topProductsResponse = await dashboardAPI.getTopProducts(warehouse.id, 10)
-      setTopProducts(topProductsResponse.data.data)
-    } catch (error) {
-      console.error('Failed to fetch warehouse charts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const loading = categoryLoading || historyLoading || productsLoading
 
   if (loading) {
     return (
@@ -248,15 +191,20 @@ function WarehouseChartsSection({ warehouse }) {
     )
   }
 
+  const categoryData = stockByCategory.map(item => ({
+    name: item.category,
+    value: item.quantity
+  }))
+
   return (
     <div className="mb-8">
       <h2 className="text-xl font-bold text-gray-900 mb-4">{warehouse.name} - {warehouse.location}</h2>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Stock by Category Pie Chart */}
-        {stockByCategory.length > 0 && (
+        {categoryData.length > 0 && (
           <PieChart
-            data={stockByCategory}
+            data={categoryData}
             title={`Stock by Category - ${warehouse.name}`}
             dataKey="value"
             nameKey="name"
