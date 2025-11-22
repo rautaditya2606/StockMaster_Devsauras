@@ -44,7 +44,9 @@ export const getTasksForWorker = async (req, res) => {
     try {
         const tasks = await prisma.task.findMany({
             where: { assignedToId: workerId },
-            include: { assignedBy: true },
+            include: {
+                assignedBy: { select: { name: true } },
+            },
         });
         res.json(tasks);
     } catch (error) {

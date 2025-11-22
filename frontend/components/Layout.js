@@ -36,11 +36,12 @@ export default function Layout({ children }) {
       const newNav = [...baseNavigation];
       if (user.role === 'MANAGER') {
         newNav.push({ name: 'Tasks', href: '/tasks' });
-      }
-      if (user.role === 'WAREHOUSE_STAFF') {
+      } else if (user.role === 'WAREHOUSE_STAFF') {
         newNav.push({ name: 'My Tasks', href: '/my-tasks' });
       }
       setNavigation(newNav);
+    } else {
+      setNavigation(baseNavigation);
     }
   }, [user]);
 
