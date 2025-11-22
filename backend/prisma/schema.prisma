@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String     @id @default(cuid())
+  name        String
+  email       String     @unique
+  password    String
+  role        UserRole   @default(WAREHOUSE_STAFF)
+  warehouseId String?     // Optional: warehouse staff assigned to specific warehouse
+  createdAt   DateTime   @default(now())
+
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id])
+  receipts    Receipt[]
+  deliveries  Delivery[]
+  transfers   Transfer[]
+  adjustments Adjustment[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  MANAGER
+  WAREHOUSE_STAFF
+
+  @@map("user_role")
+}
+
+model Warehouse {
+  id       String  @id @default(cuid())
+  name     String
+  location String
+
+  users          User[]
+  stockLevels     StockLevel[]
+  receipts        Receipt[]
+  deliveries      Delivery[]
+  transfersFrom   Transfer[] @relation("TransferFrom")
+  transfersTo     Transfer[] @relation("TransferTo")
+  adjustments     Adjustment[]
+
+  @@map("warehouses")
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  sku       String   @unique
+  category  String
+  uom       String // Unit of Measure
+  createdAt DateTime @default(now())
+
+  stockLevels     StockLevel[]
+  receiptItems    ReceiptItem[]
+  deliveryItems   DeliveryItem[]
+  transferItems  TransferItem[]
+  adjustments    Adjustment[]
+  ledgerEntries  StockLedger[]
+
+  @@map("products")
+}
+
+model StockLevel {
+  id          String   @id @default(cuid())
+  productId   String
+  warehouseId String
+  quantity    Int      @default(0)
+
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, warehouseId])
+  @@map("stock_levels")
+}
+
+model Receipt {
+  id          String        @id @default(cuid())
+  supplierName String
+  status      DocumentStatus @default(DRAFT)
+  createdBy   String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  creator User          @relation(fields: [createdBy], references: [id])
+  warehouse Warehouse   @relation(fields: [warehouseId], references: [id])
+  warehouseId String
+  items    ReceiptItem[]
+
+  @@map("receipts")
+}
+
+model ReceiptItem {
+  id        String  @id @default(cuid())
+  receiptId String
+  productId String
+  quantity  Int
+
+  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("receipt_items")
+}
+
+model Delivery {
+  id          String        @id @default(cuid())
+  customerName String
+  status      DocumentStatus @default(DRAFT)
+  createdBy   String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  creator User          @relation(fields: [createdBy], references: [id])
+  warehouse Warehouse   @relation(fields: [warehouseId], references: [id])
+  warehouseId String
+  items    DeliveryItem[]
+
+  @@map("deliveries")
+}
+
+model DeliveryItem {
+  id         String  @id @default(cuid())
+  deliveryId String
+  productId  String
+  quantity   Int
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("delivery_items")
+}
+
+model Transfer {
+  id             String        @id @default(cuid())
+  fromWarehouseId String
+  toWarehouseId   String
+  status         DocumentStatus @default(DRAFT)
+  createdBy      String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  fromWarehouse Warehouse @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouse   Warehouse @relation("TransferTo", fields: [toWarehouseId], references: [id])
+  creator       User          @relation(fields: [createdBy], references: [id])
+  items         TransferItem[]
+
+  @@map("transfers")
+}
+
+model TransferItem {
+  id        String  @id @default(cuid())
+  transferId String
+  productId  String
+  quantity   Int
+
+  transfer Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@map("transfer_items")
+}
+
+model Adjustment {
+  id          String   @id @default(cuid())
+  warehouseId String
+  productId   String
+  prevQty     Int
+  newQty      Int
+  reason      String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+  creator   User      @relation(fields: [createdBy], references: [id])
+
+  @@map("adjustments")
+}
+
+model StockLedger {
+  id             String      @id @default(cuid())
+  productId      String
+  sourceWarehouse String?
+  destWarehouse   String?
+  quantity       Int
+  type           LedgerType
+  referenceId    String? // ID of receipt/delivery/transfer/adjustment
+  timestamp      DateTime    @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("stock_ledger")
+  @@index([productId])
+  @@index([timestamp])
+}
+
+enum DocumentStatus {
+  DRAFT
+  WAITING
+  READY
+  DONE
+  CANCELED
+
+  @@map("document_status")
+}
+
+enum LedgerType {
+  RECEIPT
+  DELIVERY
+  TRANSFER_OUT
+  TRANSFER_IN
+  ADJUSTMENT
+
+  @@map("ledger_type")
+}
+
