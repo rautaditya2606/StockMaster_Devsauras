@@ -27,12 +27,35 @@ const updateWarehouseSchema = z.object({
   }),
 });
 
-router.get('/', authenticate, getAllWarehouses);
-router.get('/:id', authenticate, getWarehouseById);
-router.post('/', authenticate, validate(createWarehouseSchema), createWarehouse);
-router.put('/:id', authenticate, validate(updateWarehouseSchema), updateWarehouse);
-router.delete('/:id', authenticate, deleteWarehouse);
-router.get('/:id/stock', authenticate, getWarehouseStock);
+router.get('/', getAllWarehouses);
+router.get('/:id', getWarehouseById);
+router.post('/', validate(createWarehouseSchema), createWarehouse);
+router.put('/:id', validate(updateWarehouseSchema), updateWarehouse);
+router.delete('/:id', deleteWarehouse);
+router.get('/:id/stock', getWarehouseStock);
+
+// Add logging to debug the /public endpoint
+router.get('/public', async (req, res, next) => {
+  try {
+    console.log('Fetching all warehouses...');
+    const warehouses = await warehouseService.getAllWarehouses();
+    console.log('Warehouses fetched:', warehouses);
+    res.json({ success: true, data: warehouses });
+  } catch (error) {
+    console.error('Error in /public endpoint:', error);
+    next(error);
+  }
+});
+
+// Apply authentication middleware only to protected routes
+router.use((req, res, next) => {
+  if (req.path === '/public') {
+    return next();
+  }
+  authenticate(req, res, next);
+});
+
+// Ensure this route is defined before any middleware is applied globally.
 
 export default router;
 

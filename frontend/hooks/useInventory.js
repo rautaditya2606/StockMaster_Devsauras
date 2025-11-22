@@ -28,11 +28,34 @@ export const useReceipt = (id) => {
 export const useCreateReceipt = () => {
   const queryClient = useQueryClient()
   return useMutation(
-    (data) => receiptsAPI.create(data),
+    (data) => receiptsAPI.create(data).then(res => res.data.data),
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['receipts'])
-        queryClient.invalidateQueries(['dashboard'])
+      onMutate: async (newReceipt) => {
+        // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+        await queryClient.cancelQueries('receipts')
+        
+        // Snapshot the previous value
+        const previousReceipts = queryClient.getQueryData('receipts')
+        
+        // Optimistically update the cache
+        queryClient.setQueryData('receipts', (old) => {
+          return [...(old || []), { ...newReceipt, id: 'temp-id', status: 'DRAFT' }]
+        })
+        
+        // Return a context object with the snapshotted value
+        return { previousReceipts }
+      },
+      // If the mutation fails, use the context returned from onMutate to roll back
+      onError: (err, newReceipt, context) => {
+        if (context?.previousReceipts) {
+          queryClient.setQueryData('receipts', context.previousReceipts)
+        }
+      },
+      // Always refetch after error or success:
+      onSettled: () => {
+        queryClient.invalidateQueries('receipts')
+        queryClient.invalidateQueries('dashboard')
+        queryClient.invalidateQueries('products')
       },
     }
   )
@@ -79,11 +102,34 @@ export const useDelivery = (id) => {
 export const useCreateDelivery = () => {
   const queryClient = useQueryClient()
   return useMutation(
-    (data) => deliveriesAPI.create(data),
+    (data) => deliveriesAPI.create(data).then(res => res.data.data),
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['deliveries'])
-        queryClient.invalidateQueries(['dashboard'])
+      onMutate: async (newDelivery) => {
+        // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+        await queryClient.cancelQueries('deliveries')
+        
+        // Snapshot the previous value
+        const previousDeliveries = queryClient.getQueryData('deliveries')
+        
+        // Optimistically update the cache
+        queryClient.setQueryData('deliveries', (old) => {
+          return [...(old || []), { ...newDelivery, id: 'temp-id', status: 'DRAFT' }]
+        })
+        
+        // Return a context object with the snapshotted value
+        return { previousDeliveries }
+      },
+      // If the mutation fails, use the context returned from onMutate to roll back
+      onError: (err, newDelivery, context) => {
+        if (context?.previousDeliveries) {
+          queryClient.setQueryData('deliveries', context.previousDeliveries)
+        }
+      },
+      // Always refetch after error or success:
+      onSettled: () => {
+        queryClient.invalidateQueries('deliveries')
+        queryClient.invalidateQueries('dashboard')
+        queryClient.invalidateQueries('products')
       },
     }
   )

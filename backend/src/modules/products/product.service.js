@@ -63,7 +63,7 @@ export const getProductById = async (id) => {
   return product;
 };
 
-export const createProduct = async (data) => {
+export const createProduct = async (data, user) => {
   // Check if SKU exists
   const existing = await prisma.product.findUnique({
     where: { sku: data.sku },
@@ -73,6 +73,31 @@ export const createProduct = async (data) => {
     throw new Error('Product with this SKU already exists');
   }
 
+  // If user is staff and has a warehouseId, include stock level creation
+  if (user?.role === 'WAREHOUSE_STAFF' && user?.warehouseId) {
+    return prisma.$transaction(async (prisma) => {
+      const product = await prisma.product.create({
+        data: {
+          name: data.name,
+          sku: data.sku,
+          category: data.category,
+          uom: data.uom,
+          stockLevels: {
+            create: {
+              warehouseId: user.warehouseId,
+              quantity: 0, // Default to 0 quantity
+            },
+          },
+        },
+        include: {
+          stockLevels: true,
+        },
+      });
+      return product;
+    });
+  }
+
+  // For other cases (e.g., manager or no warehouse assigned)
   return prisma.product.create({
     data,
   });

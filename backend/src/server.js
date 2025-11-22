@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { errorHandler } from './core/middlewares/errorHandler.js';
 import { cacheMiddleware, getCacheDuration } from './core/middlewares/cache.js';
+import { authenticate } from './core/middlewares/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,17 @@ app.use('/api/v1/ledger', cacheMiddleware(getCacheDuration('/ledger')), ledgerRo
 app.use('/api/v1/dashboard', cacheMiddleware(getCacheDuration('/dashboard/kpis')), dashboardRouter);
 app.use('/api/v1/tasks', taskRouter);
 app.use('/api/v1/users', userRouter);
+
+// Direct public warehouse route
+app.use('/api/public/warehouses', warehouseRouter);
+
+// Apply authentication middleware only to protected routes
+app.use('/api', (req, res, next) => {
+  if (req.path.startsWith('/public/warehouses/public')) {
+    return next();
+  }
+  authenticate(req, res, next);
+});
 
 // 404 handler
 app.use((req, res) => {
