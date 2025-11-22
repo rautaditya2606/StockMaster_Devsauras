@@ -1,6 +1,13 @@
 import prisma from '../../core/db/prisma.js';
 
-export const getDashboardKPIs = async () => {
+export const getDashboardKPIs = async (warehouseId = null) => {
+  const whereLowStock = warehouseId ? { warehouseId, quantity: { lt: 10 } } : { quantity: { lt: 10 } };
+
+  // For total products when scoped to a warehouse, count stockLevel rows for that warehouse (one per product per warehouse)
+  const totalProductsPromise = warehouseId
+    ? prisma.stockLevel.count({ where: { warehouseId } })
+    : prisma.product.count();
+
   const [
     totalProducts,
     totalWarehouses,
@@ -12,18 +19,14 @@ export const getDashboardKPIs = async () => {
     categoryBreakdown,
   ] = await Promise.all([
     // Total products
-    prisma.product.count(),
+    totalProductsPromise,
 
-    // Total warehouses
+    // Total warehouses (always global)
     prisma.warehouse.count(),
 
-    // Low stock items (quantity < 10)
+    // Low stock items (quantity < 10) optionally limited to a warehouse
     prisma.stockLevel.findMany({
-      where: {
-        quantity: {
-          lt: 10,
-        },
-      },
+      where: whereLowStock,
       include: {
         product: {
           select: {
@@ -42,34 +45,39 @@ export const getDashboardKPIs = async () => {
       },
     }),
 
-    // Pending documents
+    // Pending documents: restrict receipts/deliveries to warehouseId if provided
     prisma.receipt.count({
-      where: {
-        status: {
-          in: ['DRAFT', 'WAITING', 'READY'],
-        },
-      },
+      where: warehouseId
+        ? {
+            warehouseId,
+            status: { in: ['DRAFT', 'WAITING', 'READY'] },
+          }
+        : { status: { in: ['DRAFT', 'WAITING', 'READY'] } },
     }),
 
     prisma.delivery.count({
-      where: {
-        status: {
-          in: ['DRAFT', 'WAITING', 'READY'],
-        },
-      },
+      where: warehouseId
+        ? {
+            warehouseId,
+            status: { in: ['DRAFT', 'WAITING', 'READY'] },
+          }
+        : { status: { in: ['DRAFT', 'WAITING', 'READY'] } },
     }),
 
+    // For transfers, consider those where the warehouse is either source or destination when scoped
     prisma.transfer.count({
-      where: {
-        status: {
-          in: ['DRAFT', 'WAITING', 'READY'],
-        },
-      },
+      where: warehouseId
+        ? {
+            status: { in: ['DRAFT', 'WAITING', 'READY'] },
+            OR: [{ fromWarehouseId: warehouseId }, { toWarehouseId: warehouseId }],
+          }
+        : { status: { in: ['DRAFT', 'WAITING', 'READY'] } },
     }),
 
-    // Stock by warehouse
+    // Stock by warehouse (if scoped, return single group for that warehouse)
     prisma.stockLevel.groupBy({
       by: ['warehouseId'],
+      where: warehouseId ? { warehouseId } : undefined,
       _sum: {
         quantity: true,
       },
@@ -78,13 +86,20 @@ export const getDashboardKPIs = async () => {
       },
     }),
 
-    // Category breakdown
-    prisma.product.groupBy({
-      by: ['category'],
-      _count: {
-        id: true,
-      },
-    }),
+    // Category breakdown (if scoped, count products present in that warehouse)
+    warehouseId
+      ? prisma.product.findMany({
+          where: {
+            stockLevels: { some: { warehouseId } },
+          },
+          select: {
+            category: true,
+          },
+        })
+      : prisma.product.groupBy({
+          by: ['category'],
+          _count: { id: true },
+        }),
   ]);
 
   // Enrich stock by warehouse with warehouse details
@@ -118,10 +133,13 @@ export const getDashboardKPIs = async () => {
       total: pendingReceipts + pendingDeliveries + pendingTransfers,
     },
     stockByWarehouse: stockByWarehouseEnriched,
-    categoryBreakdown: categoryBreakdown.map((item) => ({
-      category: item.category,
-      count: item._count.id,
-    })),
+    categoryBreakdown: warehouseId
+      ? // when we fetched product rows, reduce to counts per category
+        categoryBreakdown.reduce((acc, p) => {
+          acc[p.category] = (acc[p.category] || 0) + 1;
+          return acc;
+        }, {})
+      : categoryBreakdown.map((item) => ({ category: item.category, count: item._count.id })),
   };
 };
 

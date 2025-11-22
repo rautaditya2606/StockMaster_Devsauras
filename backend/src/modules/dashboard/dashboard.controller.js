@@ -2,7 +2,9 @@ import * as dashboardService from './dashboard.service.js';
 
 export const getDashboardKPIs = async (req, res, next) => {
   try {
-    const kpis = await dashboardService.getDashboardKPIs();
+    // If the user is warehouse staff, scope KPIs to their assigned warehouse
+    const warehouseId = req.query.warehouseId || (req.user && req.user.role === 'WAREHOUSE_STAFF' ? req.user.warehouseId : null);
+    const kpis = await dashboardService.getDashboardKPIs(warehouseId);
     res.json({
       success: true,
       data: kpis,

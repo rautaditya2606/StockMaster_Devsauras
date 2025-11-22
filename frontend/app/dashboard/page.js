@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState(null)
 
   // Fetch data using React Query (cached)
-  const { data: kpis, isLoading: kpisLoading } = useDashboardKPIs()
+  const { data: kpis, isLoading: kpisLoading } = useDashboardKPIs(selectedWarehouse)
   const { data: warehouses = [], isLoading: warehousesLoading } = useWarehouses()
   const { data: warehouseDistribution = [] } = useWarehouseStockDistribution()
 

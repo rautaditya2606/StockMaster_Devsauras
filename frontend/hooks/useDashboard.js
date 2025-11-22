@@ -2,10 +2,10 @@ import { useQuery } from 'react-query'
 import { dashboardAPI, warehousesAPI } from '@/services/api'
 
 // Dashboard KPIs
-export const useDashboardKPIs = () => {
+export const useDashboardKPIs = (warehouseId = null) => {
   return useQuery(
-    ['dashboard', 'kpis'],
-    () => dashboardAPI.getKPIs().then(res => res.data.data),
+    ['dashboard', 'kpis', warehouseId],
+    () => dashboardAPI.getKPIs(warehouseId).then(res => res.data.data),
     {
       staleTime: 2 * 60 * 1000, // 2 minutes
       cacheTime: 5 * 60 * 1000, // 5 minutes
