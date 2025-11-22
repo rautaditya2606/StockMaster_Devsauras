@@ -25,27 +25,52 @@ async function main() {
   console.log('\n🏭 Creating warehouses...');
   const warehouse1 = await prisma.warehouse.create({
     data: {
-      name: 'Main Warehouse',
-      location: 'New York, NY',
+      name: 'Mumbai Central Warehouse',
+      location: 'Mumbai, Maharashtra',
     },
   });
   console.log('✅ Created:', warehouse1.name);
 
   const warehouse2 = await prisma.warehouse.create({
     data: {
-      name: 'West Coast Distribution',
-      location: 'Los Angeles, CA',
+      name: 'Bengaluru Distribution Centre',
+      location: 'Bengaluru, Karnataka',
     },
   });
   console.log('✅ Created:', warehouse2.name);
 
   const warehouse3 = await prisma.warehouse.create({
     data: {
-      name: 'East Coast Hub',
-      location: 'Boston, MA',
+      name: 'New Delhi Hub',
+      location: 'New Delhi, Delhi',
     },
   });
   console.log('✅ Created:', warehouse3.name);
+
+  // Additional warehouses
+  const warehouse4 = await prisma.warehouse.create({
+    data: {
+      name: 'Chennai Regional Warehouse',
+      location: 'Chennai, Tamil Nadu',
+    },
+  });
+  console.log('✅ Created:', warehouse4.name);
+
+  const warehouse5 = await prisma.warehouse.create({
+    data: {
+      name: 'Kolkata Logistics Center',
+      location: 'Kolkata, West Bengal',
+    },
+  });
+  console.log('✅ Created:', warehouse5.name);
+
+  const warehouse6 = await prisma.warehouse.create({
+    data: {
+      name: 'Hyderabad Crossdock',
+      location: 'Hyderabad, Telangana',
+    },
+  });
+  console.log('✅ Created:', warehouse6.name);
 
   // Create Users
   console.log('\n👥 Creating users...');
@@ -68,30 +93,66 @@ async function main() {
       email: 'staff@stockmaster.com',
       password: staffPassword,
       role: 'WAREHOUSE_STAFF',
-      warehouseId: warehouse1.id, // Assign to Main Warehouse
+      warehouseId: warehouse1.id, // Assign to Mumbai Central Warehouse
     },
   });
   console.log('✅ Created Warehouse Staff:', staff.email, `(Assigned to: ${warehouse1.name})`);
 
+  // Additional warehouse staff
+  const staff2 = await prisma.user.create({
+    data: {
+      name: 'Chennai Staff',
+      email: 'chennai.staff@stockmaster.com',
+      password: await bcrypt.hash('staff234', 10),
+      role: 'WAREHOUSE_STAFF',
+      warehouseId: warehouse4.id,
+    },
+  });
+  console.log('✅ Created Warehouse Staff:', staff2.email, `(Assigned to: ${warehouse4.name})`);
+
+  const staff3 = await prisma.user.create({
+    data: {
+      name: 'Bengaluru Staff',
+      email: 'bengaluru.staff@stockmaster.com',
+      password: await bcrypt.hash('staff345', 10),
+      role: 'WAREHOUSE_STAFF',
+      warehouseId: warehouse2.id,
+    },
+  });
+  console.log('✅ Created Warehouse Staff:', staff3.email, `(Assigned to: ${warehouse2.name})`);
+
+  const staff4 = await prisma.user.create({
+    data: {
+      name: 'Kolkata Staff',
+      email: 'kolkata.staff@stockmaster.com',
+      password: await bcrypt.hash('staff456', 10),
+      role: 'WAREHOUSE_STAFF',
+      warehouseId: warehouse5.id,
+    },
+  });
+  console.log('✅ Created Warehouse Staff:', staff4.email, `(Assigned to: ${warehouse5.name})`);
+
 
   // Create Products
   console.log('\n📦 Creating products...');
+  // All products are electronics-focused now
   const products = [
     { name: 'Laptop Pro 15"', sku: 'LAP-001', category: 'Electronics', uom: 'Unit' },
-    { name: 'Wireless Mouse', sku: 'ACC-001', category: 'Accessories', uom: 'Unit' },
-    { name: 'USB-C Cable', sku: 'CAB-001', category: 'Accessories', uom: 'Unit' },
-    { name: 'Mechanical Keyboard', sku: 'KEY-001', category: 'Accessories', uom: 'Unit' },
+    { name: 'Smartphone X', sku: 'PHN-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'Tablet S', sku: 'TAB-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'Wireless Mouse', sku: 'MOU-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'Mechanical Keyboard', sku: 'KEY-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'USB-C Cable', sku: 'CAB-001', category: 'Electronics', uom: 'Unit' },
     { name: '27" Monitor', sku: 'MON-001', category: 'Electronics', uom: 'Unit' },
     { name: 'Webcam HD', sku: 'CAM-001', category: 'Electronics', uom: 'Unit' },
-    { name: 'Desk Chair Ergonomic', sku: 'FUR-001', category: 'Furniture', uom: 'Unit' },
-    { name: 'Standing Desk', sku: 'FUR-002', category: 'Furniture', uom: 'Unit' },
-    { name: 'Notebook A4', sku: 'OFF-001', category: 'Office Supplies', uom: 'Pack' },
-    { name: 'Pen Set', sku: 'OFF-002', category: 'Office Supplies', uom: 'Set' },
-    { name: 'Printer Paper', sku: 'OFF-003', category: 'Office Supplies', uom: 'Ream' },
-    { name: 'Stapler', sku: 'OFF-004', category: 'Office Supplies', uom: 'Unit' },
-    { name: 'Coffee Maker', sku: 'BRK-001', category: 'Break Room', uom: 'Unit' },
-    { name: 'Water Bottle', sku: 'BRK-002', category: 'Break Room', uom: 'Unit' },
-    { name: 'Headphones Wireless', sku: 'ACC-002', category: 'Accessories', uom: 'Unit' },
+    { name: 'Wireless Headphones', sku: 'HPH-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'Bluetooth Speaker', sku: 'SPK-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'External SSD 1TB', sku: 'SSD-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'WiFi Router', sku: 'RTR-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'Power Bank 20k', sku: 'PWB-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'Smartwatch Z', sku: 'SWT-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'HDMI Cable', sku: 'HDM-001', category: 'Electronics', uom: 'Unit' },
+    { name: 'USB Hub 4-Port', sku: 'HUB-001', category: 'Electronics', uom: 'Unit' },
   ];
 
   const createdProducts = [];
@@ -104,40 +165,46 @@ async function main() {
   // Create Stock Levels
   console.log('\n📊 Creating stock levels...');
   const stockLevels = [
-    // Main Warehouse stock
-    { product: createdProducts[0], warehouse: warehouse1, quantity: 50 }, // Laptop
-    { product: createdProducts[1], warehouse: warehouse1, quantity: 200 }, // Mouse
-    { product: createdProducts[2], warehouse: warehouse1, quantity: 150 }, // USB-C Cable
-    { product: createdProducts[3], warehouse: warehouse1, quantity: 75 }, // Keyboard
-    { product: createdProducts[4], warehouse: warehouse1, quantity: 30 }, // Monitor
-    { product: createdProducts[5], warehouse: warehouse1, quantity: 100 }, // Webcam
-    { product: createdProducts[6], warehouse: warehouse1, quantity: 25 }, // Chair
-    { product: createdProducts[7], warehouse: warehouse1, quantity: 15 }, // Desk
-    { product: createdProducts[8], warehouse: warehouse1, quantity: 500 }, // Notebook
-    { product: createdProducts[9], warehouse: warehouse1, quantity: 300 }, // Pen Set
-    { product: createdProducts[10], warehouse: warehouse1, quantity: 200 }, // Paper
-    { product: createdProducts[11], warehouse: warehouse1, quantity: 50 }, // Stapler
-    { product: createdProducts[12], warehouse: warehouse1, quantity: 5 }, // Coffee Maker
-    { product: createdProducts[13], warehouse: warehouse1, quantity: 8 }, // Water Bottle (LOW STOCK)
-    { product: createdProducts[14], warehouse: warehouse1, quantity: 60 }, // Headphones
+    // Mumbai Central Warehouse stock
+    { product: createdProducts[0], warehouse: warehouse1, quantity: 60 }, // Laptop
+    { product: createdProducts[1], warehouse: warehouse1, quantity: 250 }, // Smartphone
+    { product: createdProducts[2], warehouse: warehouse1, quantity: 120 }, // Tablet
+    { product: createdProducts[3], warehouse: warehouse1, quantity: 220 }, // Mouse
+    { product: createdProducts[4], warehouse: warehouse1, quantity: 90 }, // Keyboard
+    { product: createdProducts[5], warehouse: warehouse1, quantity: 300 }, // USB-C Cable
+    { product: createdProducts[6], warehouse: warehouse1, quantity: 40 }, // Monitor
+    { product: createdProducts[7], warehouse: warehouse1, quantity: 150 }, // Webcam
+    { product: createdProducts[8], warehouse: warehouse1, quantity: 80 }, // Headphones
+    { product: createdProducts[10], warehouse: warehouse1, quantity: 60 }, // External SSD
 
-    // West Coast Distribution stock
-    { product: createdProducts[0], warehouse: warehouse2, quantity: 30 }, // Laptop
-    { product: createdProducts[1], warehouse: warehouse2, quantity: 120 }, // Mouse
-    { product: createdProducts[2], warehouse: warehouse2, quantity: 100 }, // USB-C Cable
-    { product: createdProducts[4], warehouse: warehouse2, quantity: 20 }, // Monitor
-    { product: createdProducts[5], warehouse: warehouse2, quantity: 80 }, // Webcam
-    { product: createdProducts[6], warehouse: warehouse2, quantity: 15 }, // Chair
-    { product: createdProducts[8], warehouse: warehouse2, quantity: 300 }, // Notebook
-    { product: createdProducts[9], warehouse: warehouse2, quantity: 200 }, // Pen Set
+    // Bengaluru Distribution Centre stock
+    { product: createdProducts[0], warehouse: warehouse2, quantity: 40 }, // Laptop
+    { product: createdProducts[3], warehouse: warehouse2, quantity: 180 }, // Mouse
+    { product: createdProducts[5], warehouse: warehouse2, quantity: 140 }, // USB-C Cable
+    { product: createdProducts[6], warehouse: warehouse2, quantity: 30 }, // Monitor
+    { product: createdProducts[7], warehouse: warehouse2, quantity: 70 }, // Webcam
+    { product: createdProducts[9], warehouse: warehouse2, quantity: 120 }, // Bluetooth Speaker
+    { product: createdProducts[11], warehouse: warehouse2, quantity: 50 }, // WiFi Router
 
-    // East Coast Hub stock
-    { product: createdProducts[0], warehouse: warehouse3, quantity: 25 }, // Laptop
-    { product: createdProducts[1], warehouse: warehouse3, quantity: 100 }, // Mouse
-    { product: createdProducts[3], warehouse: warehouse3, quantity: 50 }, // Keyboard
-    { product: createdProducts[4], warehouse: warehouse3, quantity: 15 }, // Monitor
-    { product: createdProducts[8], warehouse: warehouse3, quantity: 250 }, // Notebook
-    { product: createdProducts[10], warehouse: warehouse3, quantity: 150 }, // Paper
+    // New Delhi Hub stock
+    { product: createdProducts[0], warehouse: warehouse3, quantity: 35 }, // Laptop
+    { product: createdProducts[1], warehouse: warehouse3, quantity: 150 }, // Smartphone
+    { product: createdProducts[4], warehouse: warehouse3, quantity: 55 }, // Keyboard
+    { product: createdProducts[6], warehouse: warehouse3, quantity: 20 }, // Monitor
+    { product: createdProducts[8], warehouse: warehouse3, quantity: 90 }, // Headphones
+
+    // Chennai Regional Warehouse stock
+    { product: createdProducts[10], warehouse: warehouse4, quantity: 80 }, // External SSD
+    { product: createdProducts[11], warehouse: warehouse4, quantity: 60 }, // WiFi Router
+    { product: createdProducts[12], warehouse: warehouse4, quantity: 45 }, // Power Bank
+
+    // Kolkata Logistics Center stock
+    { product: createdProducts[13], warehouse: warehouse5, quantity: 70 }, // Smartwatch
+    { product: createdProducts[14], warehouse: warehouse5, quantity: 200 }, // HDMI Cable
+
+    // Hyderabad Crossdock stock
+    { product: createdProducts[15], warehouse: warehouse6, quantity: 120 }, // USB Hub
+    { product: createdProducts[9], warehouse: warehouse6, quantity: 60 }, // Bluetooth Speaker
   ];
 
   for (const stock of stockLevels) {
@@ -162,7 +229,7 @@ async function main() {
       items: {
         create: [
           { productId: createdProducts[0].id, quantity: 20 }, // Laptops
-          { productId: createdProducts[1].id, quantity: 50 }, // Mice
+          { productId: createdProducts[1].id, quantity: 50 }, // Smartphones
         ],
       },
     },
@@ -178,8 +245,8 @@ async function main() {
       status: 'READY',
       items: {
         create: [
-          { productId: createdProducts[8].id, quantity: 100 }, // Notebooks
-          { productId: createdProducts[9].id, quantity: 50 }, // Pen Sets
+          { productId: createdProducts[10].id, quantity: 100 }, // External SSD
+          { productId: createdProducts[11].id, quantity: 50 }, // WiFi Router
         ],
       },
     },
@@ -197,7 +264,7 @@ async function main() {
       items: {
         create: [
           { productId: createdProducts[0].id, quantity: 10 }, // Laptops
-          { productId: createdProducts[4].id, quantity: 5 }, // Monitors
+          { productId: createdProducts[6].id, quantity: 5 }, // Monitors
         ],
       },
     },
@@ -213,7 +280,7 @@ async function main() {
       status: 'DRAFT',
       items: {
         create: [
-          { productId: createdProducts[1].id, quantity: 20 }, // Mice
+          { productId: createdProducts[3].id, quantity: 20 }, // Wireless Mouse
         ],
       },
     },
@@ -231,7 +298,7 @@ async function main() {
       items: {
         create: [
           { productId: createdProducts[0].id, quantity: 5 }, // Laptops
-          { productId: createdProducts[1].id, quantity: 30 }, // Mice
+          { productId: createdProducts[1].id, quantity: 30 }, // Smartphones
         ],
       },
     },
@@ -247,7 +314,7 @@ async function main() {
       status: 'WAITING',
       items: {
         create: [
-          { productId: createdProducts[8].id, quantity: 50 }, // Notebooks
+          { productId: createdProducts[10].id, quantity: 50 }, // External SSD
         ],
       },
     },
@@ -259,9 +326,9 @@ async function main() {
   const adjustment1 = await prisma.adjustment.create({
     data: {
       warehouseId: warehouse1.id,
-      productId: createdProducts[13].id, // Water Bottle
-      prevQty: 8,
-      newQty: 10,
+      productId: createdProducts[8].id, // Wireless Headphones
+      prevQty: 80,
+      newQty: 82,
       reason: 'Found 2 additional units during inventory count',
       createdBy: manager.id,
     },
@@ -272,11 +339,11 @@ async function main() {
   await prisma.stockLevel.update({
     where: {
       productId_warehouseId: {
-        productId: createdProducts[13].id,
+        productId: createdProducts[8].id,
         warehouseId: warehouse1.id,
       },
     },
-    data: { quantity: 10 },
+    data: { quantity: 82 },
   });
 
   // Create Ledger Entries for demo
@@ -304,7 +371,7 @@ async function main() {
       referenceId: delivery1.id,
     },
     {
-      productId: createdProducts[4].id,
+      productId: createdProducts[6].id,
       sourceWarehouse: warehouse1.id,
       quantity: 5,
       type: 'DELIVERY',
@@ -325,7 +392,7 @@ async function main() {
       referenceId: transfer1.id,
     },
     {
-      productId: createdProducts[13].id,
+      productId: createdProducts[8].id,
       destWarehouse: warehouse1.id,
       quantity: 2,
       type: 'ADJUSTMENT',
