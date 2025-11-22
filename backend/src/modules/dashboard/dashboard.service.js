@@ -216,7 +216,7 @@ export const getStockHistory = async (warehouseId = null, days = 30) => {
 
   // Group by date and calculate net stock change
   const dateMap = {};
-  ledgerEntries.forEach((entry) => {
+  for (const entry of ledgerEntries) {
     const date = entry.timestamp.toISOString().split('T')[0];
     if (!dateMap[date]) {
       dateMap[date] = {
@@ -227,14 +227,25 @@ export const getStockHistory = async (warehouseId = null, days = 30) => {
       };
     }
 
-    if (entry.type === 'RECEIPT' || entry.type === 'TRANSFER_IN' || entry.type === 'ADJUSTMENT') {
+    if (entry.type === 'RECEIPT' || entry.type === 'TRANSFER_IN') {
       dateMap[date].totalIn += entry.quantity;
       dateMap[date].netChange += entry.quantity;
     } else if (entry.type === 'DELIVERY' || entry.type === 'TRANSFER_OUT') {
       dateMap[date].totalOut += entry.quantity;
       dateMap[date].netChange -= entry.quantity;
+    } else if (entry.type === 'ADJUSTMENT') {
+      const adjustment = await prisma.adjustment.findUnique({ where: { id: entry.referenceId } });
+      if (adjustment) {
+        const change = adjustment.newQty - adjustment.prevQty;
+        if (change > 0) {
+          dateMap[date].totalIn += change;
+        } else {
+          dateMap[date].totalOut += Math.abs(change);
+        }
+        dateMap[date].netChange += change;
+      }
     }
-  });
+  }
 
   return Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date));
 };

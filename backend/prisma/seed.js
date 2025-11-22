@@ -8,6 +8,7 @@ async function main() {
 
   // Clear existing data (optional - comment out if you want to keep existing data)
   console.log('🧹 Cleaning existing data...');
+  await prisma.task.deleteMany();
   await prisma.stockLedger.deleteMany();
   await prisma.adjustment.deleteMany();
   await prisma.transferItem.deleteMany();
@@ -131,6 +132,17 @@ async function main() {
     },
   });
   console.log('✅ Created Warehouse Staff:', staff4.email, `(Assigned to: ${warehouse5.name})`);
+
+  // Create a sample task
+  const task = await prisma.task.create({
+    data: {
+      title: 'Sample Task',
+      description: 'This is a sample task',
+      assignedToId: staff.id,
+      assignedById: manager.id,
+    },
+  });
+  console.log('✅ Created sample task:', task.id);
 
 
   // Create Products
@@ -331,16 +343,7 @@ async function main() {
     { product: createdProducts[11], warehouse: warehouse6, quantity: 80 }, // Power Bank
     { product: createdProducts[24], warehouse: warehouse6, quantity: 40 }, // Laptop Bag
     { product: createdProducts[49], warehouse: warehouse6, quantity: 120 }, // Resistor Kit
-    { product: createdProducts[7], warehouse: warehouse2, quantity: 70 }, // Webcam
-    { product: createdProducts[9], warehouse: warehouse2, quantity: 120 }, // Bluetooth Speaker
-    { product: createdProducts[11], warehouse: warehouse2, quantity: 50 }, // WiFi Router
 
-    // New Delhi Hub stock
-    { product: createdProducts[0], warehouse: warehouse3, quantity: 35 }, // Laptop
-    { product: createdProducts[1], warehouse: warehouse3, quantity: 150 }, // Smartphone
-    { product: createdProducts[4], warehouse: warehouse3, quantity: 55 }, // Keyboard
-    { product: createdProducts[6], warehouse: warehouse3, quantity: 20 }, // Monitor
-    { product: createdProducts[8], warehouse: warehouse3, quantity: 90 }, // Headphones
 
     // Chennai Regional Warehouse stock
     { product: createdProducts[10], warehouse: warehouse4, quantity: 80 }, // External SSD
@@ -498,6 +501,79 @@ async function main() {
     },
   });
   console.log('✅ Created adjustment:', adjustment1.id);
+
+  // --- Add stock activity for other warehouses to ensure they have history ---
+  console.log('\n➕ Adding activity to other warehouses...');
+
+  const warehousesToSeed = [warehouse3, warehouse4, warehouse5, warehouse6];
+  const productsToUse = createdProducts.slice(0, 5); // Use a few products for seeding
+
+  for (const warehouse of warehousesToSeed) {
+    // Create a receipt
+    const receipt = await prisma.receipt.create({
+      data: {
+        supplierName: 'Local Electronics Co.',
+        warehouseId: warehouse.id,
+        createdBy: manager.id,
+        status: 'DONE',
+        items: {
+          create: productsToUse.map(p => ({ productId: p.id, quantity: Math.floor(Math.random() * 50) + 10 })),
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    // Create ledger entries for the receipt
+    for (const item of receipt.items) {
+      await prisma.stockLedger.create({
+        data: {
+          productId: item.productId,
+          destWarehouse: warehouse.id,
+          quantity: item.quantity,
+          type: 'RECEIPT',
+          referenceId: receipt.id,
+        },
+      });
+    }
+
+    // Create an adjustment
+    const productToAdjust = productsToUse[0];
+    const stockLevel = await prisma.stockLevel.findFirst({ where: { warehouseId: warehouse.id, productId: productToAdjust.id } });
+    if (stockLevel) {
+      const prevQty = stockLevel.quantity;
+      const newQty = prevQty + 10;
+      const adjustment = await prisma.adjustment.create({
+        data: {
+          warehouseId: warehouse.id,
+          productId: productToAdjust.id,
+          prevQty,
+          newQty,
+          reason: 'Stock correction',
+          createdBy: manager.id,
+        },
+      });
+
+      // Create ledger entry for the adjustment
+      await prisma.stockLedger.create({
+        data: {
+          productId: productToAdjust.id,
+          destWarehouse: warehouse.id,
+          quantity: 10,
+          type: 'ADJUSTMENT',
+          referenceId: adjustment.id,
+        },
+      });
+
+      // Update stock level
+      await prisma.stockLevel.update({
+        where: { id: stockLevel.id },
+        data: { quantity: newQty },
+      });
+    }
+    console.log(`✅ Added activity for ${warehouse.name}`);
+  }
 
   // Update stock level for adjustment (since adjustments immediately update stock)
   await prisma.stockLevel.update({

@@ -64,7 +64,7 @@ export default function DashboardPage() {
             <select
               value={selectedWarehouse || 'all'}
               onChange={(e) => setSelectedWarehouse(e.target.value === 'all' ? null : e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm"
+              className="block w-full max-w-xs px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               <option value="all">All Warehouses</option>
               {warehouses.map((wh) => (
@@ -102,23 +102,24 @@ export default function DashboardPage() {
         {isManager ? (
           // Manager View: Show charts for each warehouse
           <>
-            {warehouses.map((warehouse) => (
+            {selectedWarehouse ? (
+              // Show charts for the selected warehouse
               <WarehouseChartsSection
-                key={warehouse.id}
-                warehouse={warehouse}
+                key={selectedWarehouse}
+                warehouse={warehouses.find(w => w.id === selectedWarehouse)}
               />
-            ))}
-            
-            {/* Overall Warehouse Distribution */}
-            {warehouseDistribution.length > 0 && (
-              <div className="mb-8">
-                <PieChart
-                  data={warehouseDistribution}
-                  title="Stock Distribution Across All Warehouses"
-                  dataKey="value"
-                  nameKey="name"
-                />
-              </div>
+            ) : (
+              // Show overall distribution chart when 'All Warehouses' is selected
+              warehouseDistribution.length > 0 && (
+                <div className="mb-8">
+                  <PieChart
+                    data={warehouseDistribution}
+                    title="Stock Distribution Across All Warehouses"
+                    dataKey="value"
+                    nameKey="name"
+                  />
+                </div>
+              )
             )}
           </>
         ) : (
