@@ -24,6 +24,8 @@ model User {
   deliveries  Delivery[]
   transfers   Transfer[]
   adjustments Adjustment[]
+  tasksAssigned   Task[] @relation("AssignedTo")
+  tasksCreated    Task[] @relation("AssignedBy")
 
   @@map("users")
 }
@@ -219,5 +221,29 @@ enum LedgerType {
   ADJUSTMENT
 
   @@map("ledger_type")
+}
+
+model Task {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  status       TaskStatus @default(PENDING)
+  assignedToId String
+  assignedById String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  assignedTo User @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedBy User @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  ONGOING
+  COMPLETED
+
+  @@map("task_status")
 }
 

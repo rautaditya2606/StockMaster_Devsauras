@@ -19,6 +19,8 @@ import transferRouter from './modules/inventory/transfers/transfer.router.js';
 import adjustmentRouter from './modules/inventory/adjustments/adjustment.router.js';
 import ledgerRouter from './modules/inventory/ledger/ledger.router.js';
 import dashboardRouter from './modules/dashboard/dashboard.router.js';
+import taskRouter from './modules/tasks/task.router.js';
+import userRouter from './modules/users/user.router.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,6 +50,8 @@ app.use('/api/v1/transfers', cacheMiddleware(getCacheDuration('/transfers')), tr
 app.use('/api/v1/adjustments', cacheMiddleware(getCacheDuration('/adjustments')), adjustmentRouter);
 app.use('/api/v1/ledger', cacheMiddleware(getCacheDuration('/ledger')), ledgerRouter);
 app.use('/api/v1/dashboard', cacheMiddleware(getCacheDuration('/dashboard/kpis')), dashboardRouter);
+app.use('/api/v1/tasks', taskRouter);
+app.use('/api/v1/users', userRouter);
 
 // 404 handler
 app.use((req, res) => {

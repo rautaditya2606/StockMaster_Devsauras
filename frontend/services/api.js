@@ -125,5 +125,18 @@ export const productsAPI = {
     getTopProducts: (warehouseId, limit = 10) => api.get('/dashboard/charts/top-products', { params: { warehouseId, limit } }),
   };
 
+  // Tasks API
+  export const tasksAPI = {
+    create: (data) => api.post('/tasks', data),
+    getForManager: () => api.get('/tasks/manager'),
+    getForWorker: () => api.get('/tasks/worker'),
+    updateStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }),
+  };
+
+  // Users API
+  export const usersAPI = {
+    getAll: () => api.get('/users'),
+  };
+
   export default api;
 

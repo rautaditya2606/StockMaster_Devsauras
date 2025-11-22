@@ -20,14 +20,29 @@ export default function Layout({ children }) {
     router.push('/login')
   }
 
-  const navigation = [
+  const baseNavigation = [
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Products', href: '/products' },
     { name: 'Receipts', href: '/receipts' },
     { name: 'Deliveries', href: '/deliveries' },
     { name: 'Transfers', href: '/transfers' },
     { name: 'Adjustments', href: '/adjustments' },
-  ]
+  ];
+
+  const [navigation, setNavigation] = useState(baseNavigation);
+
+  useEffect(() => {
+    if (user) {
+      const newNav = [...baseNavigation];
+      if (user.role === 'MANAGER') {
+        newNav.push({ name: 'Tasks', href: '/tasks' });
+      }
+      if (user.role === 'WAREHOUSE_STAFF') {
+        newNav.push({ name: 'My Tasks', href: '/my-tasks' });
+      }
+      setNavigation(newNav);
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gray-50">
