@@ -1,22 +1,52 @@
 import prisma from '../../core/db/prisma.js';
 import { NotFoundError } from '../../core/errors/AppError.js';
 
-export const getAllProducts = async (filters = {}) => {
-  const { search, category } = filters;
+export const getAllProducts = async (user, filters = {}) => {
+  const { warehouseId, role } = user;
+  const { search, category, warehouseId: filterWarehouseId } = filters;
 
   const where = {};
+
+  // If warehouse staff, only show products in their warehouse
+  if (role === 'WAREHOUSE_STAFF' && warehouseId) {
+    where.stockLevels = {
+      some: { warehouseId },
+    };
+  }
+  
+  // If manager and warehouse filter is provided
+  if (role === 'MANAGER' && filterWarehouseId && filterWarehouseId !== 'all') {
+    where.stockLevels = {
+      some: { warehouseId: filterWarehouseId },
+    };
+  }
+
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },
       { sku: { contains: search, mode: 'insensitive' } },
     ];
   }
+
   if (category) {
     where.category = category;
   }
 
+  const include = {};
+  // If manager, include stock levels to show warehouse info
+  if (user.role === 'MANAGER') {
+    include.stockLevels = {
+      include: {
+        warehouse: {
+          select: { name: true },
+        },
+      },
+    };
+  }
+
   return prisma.product.findMany({
     where,
+    include,
     orderBy: { createdAt: 'desc' },
   });
 };

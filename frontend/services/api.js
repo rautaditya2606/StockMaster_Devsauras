@@ -56,17 +56,17 @@ export const productsAPI = {
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
   getStockLevels: (id) => api.get(`/products/${id}/stock-levels`),
-  };
+};
 
-  // Warehouses API
-  export const warehousesAPI = {
-    getAll: () => api.get('/warehouses'),
-    getById: (id) => api.get(`/warehouses/${id}`),
-    create: (data) => api.post('/warehouses', data),
-    update: (id, data) => api.put(`/warehouses/${id}`, data),
-    delete: (id) => api.delete(`/warehouses/${id}`),
-    getStock: (id) => api.get(`/warehouses/${id}/stock`),
-  };
+// Warehouses API
+export const warehousesAPI = {
+  getAll: () => api.get('/warehouses'),
+  getById: (id) => api.get(`/warehouses/${id}`),
+  create: (data) => api.post('/warehouses', data),
+  update: (id, data) => api.put(`/warehouses/${id}`, data),
+  delete: (id) => api.delete(`/warehouses/${id}`),
+  getStock: (id) => api.get(`/warehouses/${id}/stock`),
+};
 
   // Receipts API
   export const receiptsAPI = {
