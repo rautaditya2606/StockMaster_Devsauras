@@ -48,7 +48,16 @@ export default function DeliveriesPage() {
     },
   ];
 
-  const handleModalClose = () => setModalOpen(false);
+  const handleModalClose = () => {
+    console.log('Closing modal');
+    setModalOpen(false);
+  };
+
+  const handleNewDeliveryClick = (e) => {
+    e.preventDefault();
+    console.log('New Delivery button clicked');
+    setModalOpen(true);
+  };
 
   return (
     <Layout>
@@ -61,13 +70,14 @@ export default function DeliveriesPage() {
             )}
           </div>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={handleNewDeliveryClick}
             disabled={isLoading}
             className={`bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium ${
               isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
+            id="new-delivery-button"
           >
-            New Delivery
+            {isLoading ? 'Loading...' : 'New Delivery'}
           </button>
         </div>
         
@@ -80,7 +90,12 @@ export default function DeliveriesPage() {
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleModalClose} title="Create New Delivery">
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={handleModalClose} 
+        title="Create New Delivery"
+        className="z-50"
+      >
         <form>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
